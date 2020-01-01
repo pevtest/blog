@@ -24,8 +24,8 @@
 
 
 <aside class="col-3">
-    <a class="twitter-timeline" href="https://twitter.com/{{$user['usertwitter']}}" data-tweet-limit="3"> Loading tweets by {{$user['usertwitter']}} </a>
-</aside>
+    @include("miscelanious/timeline-index")
+</aside>   
 @endif
 @endforeach
 <div class="d-flex">

@@ -16,20 +16,7 @@
 </section>
 
 <aside class="col-3">
-    
-    @for($i=0; $i< count($json); $i++)
-        <article class="entry-item">
-            <b>Created at:</b> {{date("Y-m-d", strtotime($json[$i]->created_at))}}<br />
-            {{$json[$i]->text}}
-            @if($json[$i]->show)
-                <p class="text-right"><div id="div_{{$json[$i]->iddb}}"><btn id="btn_{{$json[$i]->iddb}}" class="btn btn-outline-primary" onclick="showHide({{$json[$i]->iddb}}, 0);">Hide</btn></div></p>
-            @else
-                <p class="text-right"><div id="div_{{$json[$i]->iddb}}"><btn id="btn_{{$json[$i]->iddb}}" class="btn btn-outline-primary" onclick="showHide({{$json[$i]->iddb}}, 1);">Show</btn></div></p>
-            @endif
-            <hr>
-        </article>
-        
-    @endfor
+   @include("miscelanious/timeline-myentries")
 </aside>
 @endsection
 

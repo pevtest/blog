@@ -14,7 +14,15 @@ class EntryController extends Controller
 {
     var $validation= ['title' => 'required|max:180',
                       'content' => 'required'];
-    
+    var $settings = array(
+            'oauth_access_token' => "448316307-TA3ogDXlpfdq8rxtsP87WNA1Iy7e0IsuNVivuW83",
+            'oauth_access_token_secret' => "0P57QHVmyp34kEFSJtrDimR1oZ504W5x3H1ucLgrEJXt6",
+            'consumer_key' => "BhJehtZCJMUAMsuDWdFbRMvuz",
+            'consumer_secret' => "P7iqmvu2xapvKnWOD81Ov59ODPAvMr1SVUxhZg9mExFDV8ySz6"
+        );
+    var $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
+    var $requestMethod = 'GET';
+
     public function __construct(Request $request) {
         $this->request = $request;
     }
@@ -27,35 +35,39 @@ class EntryController extends Controller
     public function index()
     {        
         $data['users'] = User::with('entries')->paginate(5);
+        foreach ($data['users'] as $key => $user){
+            $json = $this->getTwitter($user['usertwitter']);
+            $data['json'][$user->id] = $json;
+        }
+//        dd($data);
         return view('entries/index', $data);
+        
+    }
+    public function getTwitter($usertwitter){
+        $getfield = '?screen_name='.$usertwitter.'&count=5';   
+        $twitter = new TwitterAPIExchange($this->settings);
+        $jsonTwitter =  $twitter->setGetfield($getfield)
+                             ->buildOauth($this->url, $this->requestMethod)
+                             ->performRequest();
+        return json_decode($jsonTwitter);
     }
     public function myentries()
     {
         $user_id= Auth::id();
         $data['user']= User::where('id',$user_id)->with('entries')->firstOrFail()->toArray();
         
-        $settings = array(
-            'oauth_access_token' => "448316307-TA3ogDXlpfdq8rxtsP87WNA1Iy7e0IsuNVivuW83",
-            'oauth_access_token_secret' => "0P57QHVmyp34kEFSJtrDimR1oZ504W5x3H1ucLgrEJXt6",
-            'consumer_key' => "BhJehtZCJMUAMsuDWdFbRMvuz",
-            'consumer_secret' => "P7iqmvu2xapvKnWOD81Ov59ODPAvMr1SVUxhZg9mExFDV8ySz6"
-        );
-
-        $url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
-        $getfield = '?screen_name='.$data['user']['usertwitter'].'&count=6';        
-        $requestMethod = 'GET';
-        $twitter = new TwitterAPIExchange($settings);
-        $jsonTwitter =  $twitter->setGetfield($getfield)
-                             ->buildOauth($url, $requestMethod)
-                             ->performRequest();
-        $json = json_decode($jsonTwitter);
+       
+        $json = $this->getTwitter($data['user']['usertwitter']);
+             
         
+       
+//        dd($json);
          
         for($i=0; $i<count($json); $i++){
             
             $dbt = Twitter::where('datatweetid',$json[$i]->id_str)->get()->toArray();
             
-            //dd($dbt);
+//            dd($dbt);
             if(empty($dbt) || !isset($dbt[0]['show'])){
                 $twitter = new Twitter();
 
