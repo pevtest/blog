@@ -37,6 +37,12 @@ class EntryController extends Controller
         $data['users'] = User::with('entries')->paginate(5);
         foreach ($data['users'] as $key => $user){
             $json = $this->getTwitter($user['usertwitter']);
+            
+            foreach ($json as $j){                
+                $t = Twitter::where('datatweetid', $j->id_str)->get();
+                $j->show = isset($t[0]->show) ? $t[0]->show : 1;
+            }
+            
             $data['json'][$user->id] = $json;
         }
 //        dd($data);
@@ -44,7 +50,7 @@ class EntryController extends Controller
         
     }
     public function getTwitter($usertwitter){
-        $getfield = '?screen_name='.$usertwitter.'&count=5';   
+        $getfield = '?screen_name='.$usertwitter.'&count=3';   
         $twitter = new TwitterAPIExchange($this->settings);
         $jsonTwitter =  $twitter->setGetfield($getfield)
                              ->buildOauth($this->url, $this->requestMethod)
@@ -55,38 +61,8 @@ class EntryController extends Controller
     {
         $user_id= Auth::id();
         $data['user']= User::where('id',$user_id)->with('entries')->firstOrFail()->toArray();
-        
        
-        $json = $this->getTwitter($data['user']['usertwitter']);
-             
-        
-       
-//        dd($json);
-         
-        for($i=0; $i<count($json); $i++){
-            
-            $dbt = Twitter::where('datatweetid',$json[$i]->id_str)->get()->toArray();
-            
-//            dd($dbt);
-            if(empty($dbt) || !isset($dbt[0]['show'])){
-                $twitter = new Twitter();
-
-                $twitter->user_id = $user_id;
-                $twitter->datatweetid = $json[$i]->id_str;
-                $twitter->created_at = date("Y-m-d", strtotime($json[$i]->created_at));
-
-                $twitter->save();
-                
-                $json[$i]->show = 1;
-                $json[$i]->iddb = $twitter->id;
-            } else {                
-                $json[$i]->show = $dbt[0]['show'];
-                $json[$i]->iddb = $dbt[0]['id'];
-            }
-            
-        }
-        
-        $data['json'] = $json; 
+        $data['json'] = $this->processTweets($data['user']['usertwitter'], $user_id);
         
         return view('entries/myentries', $data);
     }
@@ -124,7 +100,7 @@ class EntryController extends Controller
         $entry->save();
         
         $data['user']= User::where('id',$user_id)->with('entries')->firstOrFail()->toArray();
-        
+        $data['json'] = $this->processTweets($data['user']['usertwitter'], $user_id);
         return view('entries/myentries',$data);
     }
 
@@ -177,14 +153,15 @@ class EntryController extends Controller
         $user_id= Auth::id();
         //Validations
         $validatedData = $request->validate($this->validation);
-
+        
+        $entry = Entry::find($request->id);        
         $entry->title = $request->title;
         $entry->content = $request->content;
-        $entry->user_id = $user_id;
 
         $entry->save();
         
         $data['user']= User::where('id',$user_id)->with('entries')->firstOrFail()->toArray();
+        $data['json'] = $this->processTweets($data['user']['usertwitter'], $user_id);
         
         return view('entries/myentries',$data);
     }
@@ -209,5 +186,33 @@ class EntryController extends Controller
         $twitter->save();        
         
         return response()->json(['success'=>'This twitter has been hidden.']);
+    }
+    
+    private function processTweets($usertwitter, $user_id){
+        $json = $this->getTwitter($usertwitter); //$data['user']['usertwitter']
+        
+        for($i=0; $i<count($json); $i++){
+            
+            $dbt = Twitter::where('datatweetid',$json[$i]->id_str)->get()->toArray();
+            
+            if(empty($dbt) || !isset($dbt[0]['show'])){
+                $twitter = new Twitter();
+
+                $twitter->user_id = $user_id;
+                $twitter->datatweetid = $json[$i]->id_str;
+                $twitter->created_at = date("Y-m-d", strtotime($json[$i]->created_at));
+
+                $twitter->save();
+                
+                $json[$i]->show = 1;
+                $json[$i]->iddb = $twitter->id;
+            } else {                
+                $json[$i]->show = $dbt[0]['show'];
+                $json[$i]->iddb = $dbt[0]['id'];
+            }
+            
+        }
+        
+        return $json;
     }
 }

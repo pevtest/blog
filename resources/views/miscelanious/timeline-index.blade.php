@@ -1,6 +1,7 @@
  @php $user_id= $user->id; @endphp
 
 @foreach ($json[$user->id] as $json_user)
+    @if($json_user->show)
         @if($loop->first)
             <div class="entry-title">
                <h3>
@@ -39,6 +40,6 @@
              <hr>
 
         </article>
-
+    @endif
 @endforeach
 

@@ -18,9 +18,12 @@ Route::get('/myentries', 'EntryController@myentries')->name('entry.myentries')->
 Route::get('/entry/create', 'EntryController@create')->name('entry.create')->middleware('auth');
 Route::post('/myentries', 'EntryController@store')->name('entry.store')->middleware('auth');
 Route::get('/entry/{id}', 'EntryController@edit')->name('entry.edit')->middleware('auth');
-Route::put('/myentries', 'EntryController@update')->name('entry.update')->middleware('auth');
+Route::put('/entry/update', 'EntryController@update')->name('entry.update')->middleware('auth');
 Route::get('entry/show/{id}', 'EntryController@show')->name('entry.show');
 Route::post('/ajaxRequest', 'EntryController@ajaxRequestPost');
+Route::get('/home', function () {
+    return redirect('entries');
+});
 
 Auth::routes();
 

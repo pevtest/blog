@@ -3,8 +3,9 @@
 
 @section('content')
 <div class="col-6 offset-3">
-    {!!Form::open(['route' => 'entry.store', 'method' => 'post'])!!}
+    {!!Form::open(['route' => 'entry.update', 'method' => 'put'])!!}
         <h2>Edit Entry</h2>
+        {{Form::hidden('id', old('id') ? old('id') : $id) }}
         <!-- Control Title -->
         <div class="form-group" id="title_wrapper">
            {{Form::label('title', 'Title')}}
